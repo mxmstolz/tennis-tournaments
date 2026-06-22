@@ -1,0 +1,37 @@
+/* ============================================================
+   TC Rot-Weiß Püttlingen — Typography tokens
+   Headings: Sora (confident, friendly geometric).
+   Body: Mulish (warm humanist sans, very readable).
+   ============================================================ */
+:root {
+  --font-display: 'Sora', system-ui, sans-serif;
+  --font-body: 'Mulish', system-ui, sans-serif;
+
+  /* Type scale (1.25 major-third-ish, tuned) */
+  --text-xs:   0.75rem;   /* 12px */
+  --text-sm:   0.875rem;  /* 14px */
+  --text-base: 1rem;      /* 16px */
+  --text-md:   1.125rem;  /* 18px */
+  --text-lg:   1.375rem;  /* 22px */
+  --text-xl:   1.75rem;   /* 28px */
+  --text-2xl:  2.25rem;   /* 36px */
+  --text-3xl:  3rem;      /* 48px */
+  --text-4xl:  3.75rem;   /* 60px */
+  --text-5xl:  4.75rem;   /* 76px */
+
+  --leading-tight: 1.08;
+  --leading-snug: 1.25;
+  --leading-normal: 1.55;
+  --leading-relaxed: 1.7;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em;
+  --tracking-wider: 0.12em; /* eyebrows / overlines */
+}

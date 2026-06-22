@@ -1,0 +1,77 @@
+/* ============================================================
+   TC Rot-Weiß Püttlingen — Color tokens
+   Brand: club red (from crest), crisp white, ink black.
+   Warmed with a clay-court sand accent + court green for variety.
+   ============================================================ */
+:root {
+  /* --- Brand red scale (primary) --- */
+  --red-50:  #fdeceb;
+  --red-100: #fbd6d2;
+  --red-200: #f3a8a0;
+  --red-300: #e8746a;
+  --red-400: #d8453a;
+  --red-500: #c00000; /* core brand red, sampled from crest */
+  --red-600: #a60005;
+  --red-700: #870008;
+  --red-800: #6b0309;
+  --red-900: #4f070b;
+
+  /* --- Ink / neutral scale --- */
+  --ink-900: #1a1413; /* near-black, warm */
+  --ink-800: #2c2422;
+  --ink-700: #463d3a;
+  --ink-600: #6b605c;
+  --ink-500: #8d817c;
+  --ink-400: #b3a9a4;
+  --ink-300: #d6cec9;
+  --ink-200: #e9e3df;
+  --ink-100: #f4f0ec;
+  --ink-50:  #faf7f4; /* warm paper white */
+  --white:   #ffffff;
+  --black:   #000000;
+
+  /* --- Clay court sand (warm secondary) --- */
+  --clay-100: #f6e7da;
+  --clay-300: #e6b88c;
+  --clay-500: #cf7e3f; /* terracotta clay */
+  --clay-700: #9a531f;
+
+  /* --- Court green (accent, used sparingly) --- */
+  --court-100: #e1efe2;
+  --court-500: #3f8a4f;
+  --court-700: #2c6438;
+
+  /* --- Functional --- */
+  --success: #3f8a4f;
+  --warning: #cf7e3f;
+  --danger:  #c00000;
+  --info:    #2f6fb0;
+
+  /* ============================================================
+     Semantic aliases — reference these in components
+     ============================================================ */
+  --brand:            var(--red-500);
+  --brand-strong:     var(--red-600);
+  --brand-stronger:   var(--red-700);
+  --brand-soft:       var(--red-50);
+  --brand-on:         var(--white);
+
+  --text-strong:      var(--ink-900);
+  --text-body:        var(--ink-800);
+  --text-muted:       var(--ink-600);
+  --text-faint:       var(--ink-500);
+  --text-on-brand:    var(--white);
+  --text-link:        var(--red-600);
+
+  --surface-page:     var(--ink-50);
+  --surface-card:     var(--white);
+  --surface-sunken:   var(--ink-100);
+  --surface-inverse:  var(--ink-900);
+  --surface-brand:    var(--red-500);
+
+  --border-soft:      var(--ink-200);
+  --border-default:   var(--ink-300);
+  --border-strong:    var(--ink-400);
+
+  --focus-ring:       var(--red-400);
+}

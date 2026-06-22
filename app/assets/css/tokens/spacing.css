@@ -1,0 +1,43 @@
+/* ============================================================
+   TC Rot-Weiß Püttlingen — Spacing, radius, shadow, layout
+   Family-friendly: generous rounding, soft warm shadows.
+   ============================================================ */
+:root {
+  /* Spacing scale (4px base) */
+  --space-1: 0.25rem;  /* 4 */
+  --space-2: 0.5rem;   /* 8 */
+  --space-3: 0.75rem;  /* 12 */
+  --space-4: 1rem;     /* 16 */
+  --space-5: 1.5rem;   /* 24 */
+  --space-6: 2rem;     /* 32 */
+  --space-7: 3rem;     /* 48 */
+  --space-8: 4rem;     /* 64 */
+  --space-9: 6rem;     /* 96 */
+
+  /* Radii — friendly, rounded */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-pill: 999px;
+
+  /* Soft warm shadows (slight red-brown tint, low spread) */
+  --shadow-xs: 0 1px 2px rgba(60, 30, 25, 0.08);
+  --shadow-sm: 0 2px 6px rgba(60, 30, 25, 0.08);
+  --shadow-md: 0 6px 18px rgba(60, 30, 25, 0.10);
+  --shadow-lg: 0 14px 40px rgba(60, 30, 25, 0.14);
+  --shadow-brand: 0 10px 28px rgba(192, 0, 0, 0.28);
+
+  /* Layout */
+  --container-max: 1200px;
+  --container-narrow: 760px;
+  --header-h: 76px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1); /* @kind other */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* @kind other */
+  --dur-fast: 140ms; /* @kind other */
+  --dur: 220ms; /* @kind other */
+  --dur-slow: 380ms; /* @kind other */
+}
