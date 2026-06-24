@@ -29,7 +29,6 @@ const form = reactive({
   kind: 'SINGLES' as 'SINGLES' | 'DOUBLES',
   format: 'KO' as 'KO' | 'GROUP',
   thirdPlaceMatch: true,
-  consolation: false,
   numGroups: 1,
 })
 
@@ -98,7 +97,6 @@ const statusVariant: Record<string, 'neutral' | 'soft' | 'court' | 'clay'> = {
         </div>
         <div v-if="form.format === 'KO'" class="tc-row-wrap" style="gap: var(--space-5)">
           <label class="tc-row" style="gap: 6px; cursor: pointer"><input v-model="form.thirdPlaceMatch" type="checkbox" /> Spiel um Platz 3</label>
-          <label class="tc-row" style="gap: 6px; cursor: pointer"><input v-model="form.consolation" type="checkbox" /> Nebenrunde vorgesehen</label>
         </div>
         <div class="tc-row">
           <TcButton type="submit" :disabled="saving || !form.name">Anlegen</TcButton>
@@ -122,7 +120,7 @@ const statusVariant: Record<string, 'neutral' | 'soft' | 'court' | 'clay'> = {
           <span class="tc-muted" style="font-size: var(--text-sm)">{{ disc.entries.length }} Teilnehmer</span>
           <div v-if="isAdmin" class="tc-row tc-no-print" style="gap: var(--space-3)">
             <button type="button" style="border: none; background: none; cursor: pointer; font-size: var(--text-sm); font-weight: 600; color: var(--danger)" @click.stop.prevent="removeDiscipline(disc)">Löschen</button>
-            <NuxtLink :to="`/admin/d/${disc.id}`" style="font-size: var(--text-sm); font-weight: 600" @click.stop>Verwalten →</NuxtLink>
+            <button type="button" style="border: none; background: none; cursor: pointer; font-size: var(--text-sm); font-weight: 600; color: var(--brand)" @click.stop.prevent="navigateTo(`/admin/d/${disc.id}`)">Verwalten →</button>
           </div>
         </div>
       </TcCard>

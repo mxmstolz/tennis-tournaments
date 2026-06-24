@@ -10,6 +10,7 @@ export interface EntryDto {
   name: string
   player1Id: number | null
   player2Id: number | null
+  isConsolation: boolean
 }
 
 export interface DisciplineData {
@@ -62,6 +63,7 @@ export async function getDisciplineData(disciplineId: number): Promise<Disciplin
     name: entryName(e, playerMap),
     player1Id: e.player1Id,
     player2Id: e.player2Id,
+    isConsolation: e.isConsolation,
   }))
 
   const matchRows = await db

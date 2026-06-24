@@ -15,6 +15,10 @@ const { data: players } = await useFetch<Player[]>('/api/players')
 const d = computed(() => data.value?.discipline)
 const isSetup = computed(() => d.value?.status === 'SETUP')
 const entryMap = computed(() => Object.fromEntries((data.value?.entries ?? []).map((e) => [e.id, e])))
+// Haupt-Teilnehmer vs. Nebenrunden-Teilnehmer (Platzhalter/Personen) trennen
+const mainEntries = computed(() => (data.value?.entries ?? []).filter((e) => !e.isConsolation))
+const consoEntries = computed(() => (data.value?.entries ?? []).filter((e) => e.isConsolation))
+const hasConsolationMatches = computed(() => (data.value?.matches ?? []).some((m) => m.stage === 'CONSOLATION'))
 
 const msg = ref('')
 const err = ref('')
@@ -76,11 +80,83 @@ async function draw() {
   }
 }
 
-// ---- Nebenrunde ----
-async function makeConsolation() {
+// ---- Nebenrunde (manuell) ----
+const consoFormat = ref<'KO' | 'GROUP'>('KO')
+watchEffect(() => {
+  if (d.value?.consolationFormat) consoFormat.value = d.value.consolationFormat
+})
+
+// Platzhalter oder Person zur Nebenrunde hinzufügen
+const consoNew = reactive({ displayName: '', player1Id: null as number | null, player2Id: null as number | null })
+async function addConsoEntry() {
+  err.value = ''
+  const isPlaceholder = !!consoNew.displayName.trim()
+  try {
+    await $fetch(`/api/disciplines/${did}/entries`, {
+      method: 'POST',
+      body: {
+        isConsolation: true,
+        displayName: isPlaceholder ? consoNew.displayName.trim() : null,
+        player1Id: isPlaceholder ? null : consoNew.player1Id,
+        player2Id: isPlaceholder || d.value?.kind !== 'DOUBLES' ? null : consoNew.player2Id,
+      },
+    })
+    consoNew.displayName = ''
+    consoNew.player1Id = null
+    consoNew.player2Id = null
+    await refresh()
+  } catch (e) {
+    fail(e)
+  }
+}
+
+// Platzhalter durch eine Person ersetzen (Name wird ersetzt)
+const assignFor = ref<number | null>(null)
+const assignForm = reactive({ player1Id: null as number | null, player2Id: null as number | null })
+function startAssign(e: EntryDto) {
+  assignFor.value = e.id
+  assignForm.player1Id = e.player1Id
+  assignForm.player2Id = e.player2Id
+}
+async function confirmAssign(e: EntryDto) {
   err.value = ''
   try {
-    const res = await $fetch<{ format: string; participants: number }>(`/api/disciplines/${did}/consolation`, { method: 'POST' })
+    await $fetch(`/api/entries/${e.id}`, {
+      method: 'PATCH',
+      body: {
+        player1Id: assignForm.player1Id,
+        player2Id: d.value?.kind === 'DOUBLES' ? assignForm.player2Id : null,
+        displayName: null,
+      },
+    })
+    assignFor.value = null
+    await refresh()
+    flash('Person zugewiesen.')
+  } catch (e) {
+    fail(e)
+  }
+}
+
+async function deleteConsolation() {
+  if (!confirm('Nebenrunde komplett löschen? Alle Nebenrunden-Teilnehmer, -Spiele und -Ergebnisse gehen verloren.')) return
+  err.value = ''
+  try {
+    await $fetch(`/api/disciplines/${did}/consolation`, { method: 'DELETE' })
+    await refresh()
+    flash('Nebenrunde gelöscht.')
+  } catch (e) {
+    fail(e)
+  }
+}
+
+async function buildConsolation() {
+  if (hasConsolationMatches.value && !confirm('Nebenrunde neu erstellen? Bestehende Nebenrunden-Spiele und -Ergebnisse gehen verloren.')) return
+  err.value = ''
+  try {
+    const res = await $fetch<{ format: string; participants: number }>(`/api/disciplines/${did}/consolation`, {
+      method: 'POST',
+      body: { format: consoFormat.value },
+    })
     await refresh()
     flash(`Nebenrunde (${res.format}) mit ${res.participants} Teilnehmern erstellt.`)
   } catch (e) {
@@ -133,11 +209,6 @@ async function removeDiscipline() {
     fail(e)
   }
 }
-
-const firstRoundDone = computed(() => {
-  const r1 = (data.value?.matches ?? []).filter((m) => m.stage === 'MAIN' && m.round === 1)
-  return r1.length > 0 && r1.every((m) => m.status === 'DONE' || m.status === 'BYE')
-})
 </script>
 
 <template>
@@ -171,7 +242,7 @@ const firstRoundDone = computed(() => {
 
     <!-- Teilnehmer-Verwaltung (immer sichtbar, Hinzufügen nur im SETUP) -->
     <TcCard padded accent style="margin-bottom: var(--space-6)">
-      <h3 style="margin: 0 0 var(--space-4)">Teilnehmer ({{ data.entries.length }})</h3>
+      <h3 style="margin: 0 0 var(--space-4)">Teilnehmer ({{ mainEntries.length }})</h3>
 
       <form v-if="isSetup" class="tc-row-wrap" style="align-items: flex-end; margin-bottom: var(--space-5)" @submit.prevent="addEntry">
         <label class="tc-stack-sm">
@@ -192,7 +263,7 @@ const firstRoundDone = computed(() => {
         <NuxtLink to="/admin/players" style="font-size: var(--text-sm); font-weight: 600">+ Neue Person anlegen</NuxtLink>
       </form>
 
-      <table v-if="data.entries.length" class="tc-table">
+      <table v-if="mainEntries.length" class="tc-table">
         <thead>
           <tr>
             <th v-if="d.format === 'KO'" style="width: 110px">Setzung</th>
@@ -202,7 +273,7 @@ const firstRoundDone = computed(() => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="e in data.entries" :key="e.id">
+          <tr v-for="e in mainEntries" :key="e.id">
             <td v-if="d.format === 'KO'">
               <input
                 v-if="isSetup"
@@ -228,11 +299,104 @@ const firstRoundDone = computed(() => {
 
     <!-- Spielbetrieb -->
     <template v-if="!isSetup">
-      <div v-if="d.format === 'KO' && d.consolation && firstRoundDone && !data.matches.some(m => m.stage === 'CONSOLATION')" style="margin-bottom: var(--space-5)">
-        <TcButton variant="secondary" @click="makeConsolation">Nebenrunde erzeugen (Verlierer 1. Runde)</TcButton>
-      </div>
-
       <DisciplineView :data="data" editable @enter="editMatch = $event" @schedule="scheduleMatch = $event" />
+
+      <!-- Nebenrunde (manuell, mit Platzhaltern) -->
+      <TcCard padded accent style="margin-top: var(--space-6)">
+        <h3 style="margin: 0 0 var(--space-2)">Nebenrunde (manuell)</h3>
+        <p class="tc-faint" style="font-size: var(--text-sm); margin: 0 0 var(--space-4)">
+          Platzhalter (z. B. „Verlierer Spiel 1") oder Personen anlegen, Format wählen und Plan erstellen.
+          Platzhalter können später per „Person zuweisen" durch eine Person ersetzt werden.
+        </p>
+
+        <!-- Hinzufügen -->
+        <form class="tc-row-wrap" style="align-items: flex-end; margin-bottom: var(--space-5)" @submit.prevent="addConsoEntry">
+          <label class="tc-stack-sm">
+            <span style="font-family: var(--font-display); font-weight: 600; font-size: var(--text-sm)">Platzhalter</span>
+            <input v-model="consoNew.displayName" class="tc-select" style="min-width: 200px" placeholder="z. B. Verlierer Spiel 1" />
+          </label>
+          <span class="tc-faint" style="padding-bottom: 12px">oder Person:</span>
+          <label class="tc-stack-sm">
+            <span style="font-family: var(--font-display); font-weight: 600; font-size: var(--text-sm)">{{ d.kind === 'DOUBLES' ? 'Spieler 1' : 'Person' }}</span>
+            <select v-model.number="consoNew.player1Id" :disabled="!!consoNew.displayName.trim()" class="tc-select" style="min-width: 180px">
+              <option :value="null">– wählen –</option>
+              <option v-for="p in players" :key="p.id" :value="p.id">{{ p.firstName }} {{ p.lastName }}</option>
+            </select>
+          </label>
+          <label v-if="d.kind === 'DOUBLES'" class="tc-stack-sm">
+            <span style="font-family: var(--font-display); font-weight: 600; font-size: var(--text-sm)">Spieler 2</span>
+            <select v-model.number="consoNew.player2Id" :disabled="!!consoNew.displayName.trim()" class="tc-select" style="min-width: 180px">
+              <option :value="null">– wählen –</option>
+              <option v-for="p in players" :key="p.id" :value="p.id">{{ p.firstName }} {{ p.lastName }}</option>
+            </select>
+          </label>
+          <TcButton type="submit" :disabled="!consoNew.displayName.trim() && !consoNew.player1Id">Hinzufügen</TcButton>
+        </form>
+
+        <!-- Teilnehmer der Nebenrunde -->
+        <table v-if="consoEntries.length" class="tc-table">
+          <thead>
+            <tr>
+              <th v-if="consoFormat === 'KO'" style="width: 110px">Setzung</th>
+              <th>Teilnehmer</th>
+              <th style="width: 360px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="e in consoEntries" :key="e.id">
+              <td v-if="consoFormat === 'KO'">
+                <input
+                  type="number" min="1" :value="e.seed ?? ''" class="tc-select" style="width: 70px; padding: 6px"
+                  placeholder="–"
+                  @change="setSeed(e, ($event.target as HTMLInputElement).value)"
+                />
+              </td>
+              <td>
+                {{ e.name }}
+                <TcBadge v-if="!e.player1Id" size="sm" variant="outline" style="margin-left: 6px">Platzhalter</TcBadge>
+              </td>
+              <td>
+                <template v-if="assignFor === e.id">
+                  <div class="tc-row-wrap" style="align-items: center; gap: 6px">
+                    <select v-model.number="assignForm.player1Id" class="tc-select" style="min-width: 150px; padding: 6px">
+                      <option :value="null">– wählen –</option>
+                      <option v-for="p in players" :key="p.id" :value="p.id">{{ p.firstName }} {{ p.lastName }}</option>
+                    </select>
+                    <select v-if="d.kind === 'DOUBLES'" v-model.number="assignForm.player2Id" class="tc-select" style="min-width: 150px; padding: 6px">
+                      <option :value="null">– wählen –</option>
+                      <option v-for="p in players" :key="p.id" :value="p.id">{{ p.firstName }} {{ p.lastName }}</option>
+                    </select>
+                    <TcButton size="sm" :disabled="!assignForm.player1Id" @click="confirmAssign(e)">Übernehmen</TcButton>
+                    <TcButton variant="ghost" size="sm" @click="assignFor = null">Abbrechen</TcButton>
+                  </div>
+                </template>
+                <template v-else>
+                  <TcButton variant="secondary" size="sm" @click="startAssign(e)">Person zuweisen</TcButton>
+                  <TcButton variant="ghost" size="sm" @click="removeEntry(e.id)">Entfernen</TcButton>
+                </template>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div v-else class="tc-empty" style="padding: var(--space-5)">Noch keine Nebenrunden-Teilnehmer.</div>
+
+        <!-- Plan erstellen -->
+        <div class="tc-row-wrap" style="align-items: flex-end; margin-top: var(--space-5)">
+          <label class="tc-stack-sm">
+            <span style="font-family: var(--font-display); font-weight: 600; font-size: var(--text-sm)">Format</span>
+            <select v-model="consoFormat" class="tc-select" style="min-width: 140px">
+              <option value="KO">KO-Baum</option>
+              <option value="GROUP">Gruppe</option>
+            </select>
+          </label>
+          <TcButton :disabled="consoEntries.length < 2" @click="buildConsolation">
+            {{ hasConsolationMatches ? 'Nebenrunde neu erstellen' : 'Nebenrunde erstellen' }}
+          </TcButton>
+          <TcButton v-if="hasConsolationMatches || consoEntries.length" variant="ghost" @click="deleteConsolation">
+            Nebenrunde löschen
+          </TcButton>
+        </div>
+      </TcCard>
     </template>
 
     <ScoreInput

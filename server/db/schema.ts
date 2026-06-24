@@ -84,6 +84,8 @@ export const entries = pgTable('entries', {
   displayName: text('display_name'),
   seed: integer('seed'), // Setzposition (1..n), null = ungesetzt
   groupNo: integer('group_no'), // bei Gruppenmodus
+  // Teilnehmer der manuellen Nebenrunde (Platzhalter o. Person), nicht im Hauptfeld
+  isConsolation: boolean('is_consolation').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
 

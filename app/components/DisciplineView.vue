@@ -55,30 +55,6 @@ const groupMatches = (g: number) => props.data.matches.filter((m) => m.stage ===
         <h3 style="margin: 0 0 var(--space-5)">Turnierbaum</h3>
         <BracketView :matches="data.matches" :entries="data.entries" stage="MAIN" :editable="editable" @enter="emit('enter', $event)" @schedule="emit('schedule', $event)" />
       </TcCard>
-
-      <!-- Nebenrunde -->
-      <TcCard v-if="consolationMatches.length" padded>
-        <h3 style="margin: 0 0 var(--space-5)">Nebenrunde</h3>
-        <BracketView
-          v-if="d.consolationFormat === 'KO'"
-          :matches="data.matches"
-          :entries="data.entries"
-          stage="CONSOLATION"
-          :editable="editable"
-          @enter="emit('enter', $event)"
-          @schedule="emit('schedule', $event)"
-        />
-        <GroupTable
-          v-else-if="data.consolationStandings"
-          title="Trostrunde"
-          :rows="data.consolationStandings"
-          :matches="consolationMatches"
-          :entries="data.entries"
-          :editable="editable"
-          @enter="emit('enter', $event)"
-          @schedule="emit('schedule', $event)"
-        />
-      </TcCard>
     </template>
 
     <!-- Gruppen -->
@@ -97,5 +73,29 @@ const groupMatches = (g: number) => props.data.matches.filter((m) => m.stage ===
         />
       </div>
     </template>
+
+    <!-- Nebenrunde (für alle Formate) -->
+    <TcCard v-if="consolationMatches.length" padded>
+      <h3 style="margin: 0 0 var(--space-5)">Nebenrunde</h3>
+      <BracketView
+        v-if="d.consolationFormat === 'KO'"
+        :matches="data.matches"
+        :entries="data.entries"
+        stage="CONSOLATION"
+        :editable="editable"
+        @enter="emit('enter', $event)"
+        @schedule="emit('schedule', $event)"
+      />
+      <GroupTable
+        v-else-if="data.consolationStandings"
+        title="Trostrunde"
+        :rows="data.consolationStandings"
+        :matches="consolationMatches"
+        :entries="data.entries"
+        :editable="editable"
+        @enter="emit('enter', $event)"
+        @schedule="emit('schedule', $event)"
+      />
+    </TcCard>
   </div>
 </template>

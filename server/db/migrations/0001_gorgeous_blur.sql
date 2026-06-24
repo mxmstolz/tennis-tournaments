@@ -1,0 +1,1 @@
+ALTER TABLE "entries" ADD COLUMN "is_consolation" boolean DEFAULT false NOT NULL;

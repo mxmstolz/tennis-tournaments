@@ -8,6 +8,7 @@ const schema = z.object({
   player2Id: z.number().int().nullable().optional(),
   displayName: z.string().min(1).nullable().optional(),
   seed: z.number().int().min(1).nullable().optional(),
+  isConsolation: z.boolean().optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -18,7 +19,8 @@ export default defineEventHandler(async (event) => {
 
   const disc = await db.query.disciplines.findFirst({ where: eq(disciplines.id, disciplineId) })
   if (!disc) throw createError({ statusCode: 404, statusMessage: 'Disziplin nicht gefunden.' })
-  if (disc.status !== 'SETUP') {
+  // Nebenrunden-Teilnehmer (Platzhalter) entstehen nach der Hauptauslosung – daher Bypass.
+  if (!body.isConsolation && disc.status !== 'SETUP') {
     throw createError({
       statusCode: 409,
       statusMessage: 'Teilnehmer können nur vor der Auslosung geändert werden.',
@@ -36,6 +38,7 @@ export default defineEventHandler(async (event) => {
       player2Id: body.player2Id ?? null,
       displayName: body.displayName ?? null,
       seed: body.seed ?? null,
+      isConsolation: body.isConsolation ?? false,
     })
     .returning()
   return row

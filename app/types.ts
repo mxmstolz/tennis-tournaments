@@ -7,6 +7,7 @@ export interface EntryDto {
   name: string
   player1Id: number | null
   player2Id: number | null
+  isConsolation: boolean
 }
 
 export interface MatchDto {
