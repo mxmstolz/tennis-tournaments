@@ -7,7 +7,7 @@ const props = defineProps<{
   stage?: 'MAIN' | 'CONSOLATION'
   editable?: boolean
 }>()
-const emit = defineEmits<{ enter: [match: MatchDto] }>()
+const emit = defineEmits<{ enter: [match: MatchDto]; schedule: [match: MatchDto] }>()
 
 const entryMap = computed(() => Object.fromEntries(props.entries.map((e) => [e.id, e])))
 const stage = computed(() => props.stage ?? 'MAIN')
@@ -42,6 +42,7 @@ function roundTitle(matches: MatchDto[]): string {
         :entry-map="entryMap"
         :editable="editable"
         @enter="emit('enter', $event)"
+        @schedule="emit('schedule', $event)"
       />
     </div>
 
@@ -54,6 +55,7 @@ function roundTitle(matches: MatchDto[]): string {
         :entry-map="entryMap"
         :editable="editable"
         @enter="emit('enter', $event)"
+        @schedule="emit('schedule', $event)"
       />
     </div>
   </div>

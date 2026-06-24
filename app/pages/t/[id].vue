@@ -48,6 +48,16 @@ async function create() {
   }
 }
 
+async function removeDiscipline(disc: { id: number; name: string }) {
+  if (!confirm(`Disziplin „${disc.name}" wirklich löschen? Alle Teilnehmer, Spiele und Ergebnisse gehen unwiderruflich verloren.`)) return
+  try {
+    await $fetch(`/api/disciplines/${disc.id}`, { method: 'DELETE' })
+    await refresh()
+  } catch (e: unknown) {
+    error.value = (e as { statusMessage?: string }).statusMessage || 'Fehler beim Löschen.'
+  }
+}
+
 const statusVariant: Record<string, 'neutral' | 'soft' | 'court' | 'clay'> = {
   SETUP: 'neutral',
   DRAWN: 'clay',
@@ -110,7 +120,10 @@ const statusVariant: Record<string, 'neutral' | 'soft' | 'court' | 'clay'> = {
         <h3 style="margin: 0 0 var(--space-2)">{{ disc.name }}</h3>
         <div class="tc-spread">
           <span class="tc-muted" style="font-size: var(--text-sm)">{{ disc.entries.length }} Teilnehmer</span>
-          <NuxtLink v-if="isAdmin" :to="`/admin/d/${disc.id}`" class="tc-no-print" style="font-size: var(--text-sm); font-weight: 600" @click.stop>Verwalten →</NuxtLink>
+          <div v-if="isAdmin" class="tc-row tc-no-print" style="gap: var(--space-3)">
+            <button type="button" style="border: none; background: none; cursor: pointer; font-size: var(--text-sm); font-weight: 600; color: var(--danger)" @click.stop.prevent="removeDiscipline(disc)">Löschen</button>
+            <NuxtLink :to="`/admin/d/${disc.id}`" style="font-size: var(--text-sm); font-weight: 600" @click.stop>Verwalten →</NuxtLink>
+          </div>
         </div>
       </TcCard>
     </div>

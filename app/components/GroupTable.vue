@@ -10,7 +10,7 @@ const props = defineProps<{
   editable?: boolean
   qualifyCount?: number
 }>()
-const emit = defineEmits<{ enter: [match: MatchDto] }>()
+const emit = defineEmits<{ enter: [match: MatchDto]; schedule: [match: MatchDto] }>()
 
 const entryMap = computed(() => Object.fromEntries(props.entries.map((e) => [e.id, e])))
 const name = (id: number | null) => (id != null ? entryMap.value[id]?.name ?? '—' : '—')
@@ -69,6 +69,7 @@ const sortedMatches = computed(() => [...props.matches].sort((a, b) => a.round -
         <div class="tc-row" style="gap: var(--space-3)">
           <span v-if="m.score" class="match__score">{{ formatScore(m.score) }}</span>
           <span v-else class="tc-faint" style="font-size: var(--text-xs)">offen</span>
+          <CalendarButton v-if="editable" :active="!!m.scheduledAt" @click="emit('schedule', m)" />
           <TcButton
             v-if="editable"
             size="sm"

@@ -2,7 +2,7 @@
 import type { DisciplineData, MatchDto } from '~/types'
 
 const props = defineProps<{ data: DisciplineData; editable?: boolean }>()
-const emit = defineEmits<{ enter: [match: MatchDto] }>()
+const emit = defineEmits<{ enter: [match: MatchDto]; schedule: [match: MatchDto] }>()
 
 const d = computed(() => props.data.discipline)
 const entryMap = computed(() => Object.fromEntries(props.data.entries.map((e) => [e.id, e])))
@@ -53,7 +53,7 @@ const groupMatches = (g: number) => props.data.matches.filter((m) => m.stage ===
     <template v-if="d.format === 'KO'">
       <TcCard padded>
         <h3 style="margin: 0 0 var(--space-5)">Turnierbaum</h3>
-        <BracketView :matches="data.matches" :entries="data.entries" stage="MAIN" :editable="editable" @enter="emit('enter', $event)" />
+        <BracketView :matches="data.matches" :entries="data.entries" stage="MAIN" :editable="editable" @enter="emit('enter', $event)" @schedule="emit('schedule', $event)" />
       </TcCard>
 
       <!-- Nebenrunde -->
@@ -66,6 +66,7 @@ const groupMatches = (g: number) => props.data.matches.filter((m) => m.stage ===
           stage="CONSOLATION"
           :editable="editable"
           @enter="emit('enter', $event)"
+          @schedule="emit('schedule', $event)"
         />
         <GroupTable
           v-else-if="data.consolationStandings"
@@ -75,6 +76,7 @@ const groupMatches = (g: number) => props.data.matches.filter((m) => m.stage ===
           :entries="data.entries"
           :editable="editable"
           @enter="emit('enter', $event)"
+          @schedule="emit('schedule', $event)"
         />
       </TcCard>
     </template>
@@ -91,6 +93,7 @@ const groupMatches = (g: number) => props.data.matches.filter((m) => m.stage ===
           :entries="data.entries"
           :editable="editable"
           @enter="emit('enter', $event)"
+          @schedule="emit('schedule', $event)"
         />
       </div>
     </template>

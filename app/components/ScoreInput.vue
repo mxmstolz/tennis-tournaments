@@ -3,10 +3,15 @@ import type { EntryDto, MatchDto } from '~/types'
 import type { MatchScore } from '~/utils/tennis'
 
 const props = defineProps<{ match: MatchDto; entryMap: Record<number, EntryDto> }>()
-const emit = defineEmits<{ save: [score: MatchScore]; clear: []; close: [] }>()
+const emit = defineEmits<{
+  save: [payload: { score: MatchScore | null }]
+  clear: []
+  close: []
+}>()
 
 const name1 = computed(() => (props.match.entry1Id != null ? props.entryMap[props.match.entry1Id]?.name : '—'))
 const name2 = computed(() => (props.match.entry2Id != null ? props.entryMap[props.match.entry2Id]?.name : '—'))
+const canScore = computed(() => props.match.entry1Id != null && props.match.entry2Id != null)
 
 type Cell = { p1: number | null; p2: number | null }
 const sets = reactive<Cell[]>([
@@ -41,9 +46,11 @@ function num(v: number | null): number {
   return v == null || Number.isNaN(v) ? 0 : v
 }
 
-function build(): MatchScore {
+function build(): MatchScore | null {
+  if (!canScore.value) return null
   if (mode.value === 'walkover') return { sets: [], walkover: walkoverSide.value }
   const used = sets.filter((s) => s.p1 != null || s.p2 != null)
+  if (!used.length) return null // kein Ergebnis eingetragen
   const score: MatchScore = { sets: used.map((s) => ({ p1: num(s.p1), p2: num(s.p2) })) }
   if (retired.value) score.retired = retired.value
   return score
@@ -51,7 +58,7 @@ function build(): MatchScore {
 
 function onSave() {
   error.value = ''
-  emit('save', build())
+  emit('save', { score: build() })
 }
 </script>
 
@@ -63,7 +70,7 @@ function onSave() {
   >
     <TcCard padded style="width: 100%; max-width: 460px; max-height: 90vh; overflow: auto">
       <div class="tc-spread" style="margin-bottom: var(--space-4)">
-        <h3 style="margin: 0">Ergebnis eintragen</h3>
+        <h3 style="margin: 0">Ergebnis</h3>
         <button style="border: none; background: none; cursor: pointer; font-size: 22px; color: var(--text-muted)" @click="emit('close')">×</button>
       </div>
 
@@ -72,6 +79,11 @@ function onSave() {
         <div class="tc-spread"><strong>{{ name2 }}</strong><TcBadge size="sm" variant="neutral">Spieler 2</TcBadge></div>
       </div>
 
+      <p v-if="!canScore" class="tc-faint" style="font-size: var(--text-sm); margin: 0 0 var(--space-4)">
+        Teilnehmer stehen noch nicht fest – Ergebnis kann noch nicht eingetragen werden.
+      </p>
+
+      <template v-if="canScore">
       <div class="tc-row-wrap" style="margin-bottom: var(--space-5)">
         <label class="tc-row" style="gap: 6px; cursor: pointer">
           <input v-model="mode" type="radio" value="normal" /> Ergebnis
@@ -122,6 +134,7 @@ function onSave() {
         <label class="tc-row" style="gap: 6px"><input v-model="walkoverSide" type="radio" value="p1" /> {{ name1 }} nicht angetreten</label>
         <label class="tc-row" style="gap: 6px"><input v-model="walkoverSide" type="radio" value="p2" /> {{ name2 }} nicht angetreten</label>
       </div>
+      </template>
 
       <p v-if="error" style="color: var(--danger); font-size: var(--text-sm)">{{ error }}</p>
 

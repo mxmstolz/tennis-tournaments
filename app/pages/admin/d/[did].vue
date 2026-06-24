@@ -90,10 +90,10 @@ async function makeConsolation() {
 
 // ---- Ergebnis ----
 const editMatch = ref<MatchDto | null>(null)
-async function saveScore(score: MatchScore) {
+async function saveScore(payload: { score: MatchScore | null }) {
   if (!editMatch.value) return
   try {
-    await $fetch(`/api/matches/${editMatch.value.id}`, { method: 'PATCH', body: { score } })
+    await $fetch(`/api/matches/${editMatch.value.id}`, { method: 'PATCH', body: payload })
     editMatch.value = null
     await refresh()
     flash('Ergebnis gespeichert.')
@@ -106,6 +106,32 @@ async function clearScore() {
   await $fetch(`/api/matches/${editMatch.value.id}`, { method: 'PATCH', body: { clear: true } })
   editMatch.value = null
   await refresh()
+}
+
+// ---- Termin ----
+const scheduleMatch = ref<MatchDto | null>(null)
+async function saveSchedule(payload: { scheduledAt: string | null }) {
+  if (!scheduleMatch.value) return
+  try {
+    await $fetch(`/api/matches/${scheduleMatch.value.id}`, { method: 'PATCH', body: payload })
+    scheduleMatch.value = null
+    await refresh()
+    flash('Termin gespeichert.')
+  } catch (e) {
+    fail(e)
+  }
+}
+
+// ---- Disziplin löschen ----
+async function removeDiscipline() {
+  if (!d.value) return
+  if (!confirm(`Disziplin „${d.value.name}" wirklich löschen? Alle Teilnehmer, Spiele und Ergebnisse gehen unwiderruflich verloren.`)) return
+  try {
+    await $fetch(`/api/disciplines/${did}`, { method: 'DELETE' })
+    await navigateTo(`/t/${d.value.tournamentId}`)
+  } catch (e) {
+    fail(e)
+  }
 }
 
 const firstRoundDone = computed(() => {
@@ -136,6 +162,7 @@ const firstRoundDone = computed(() => {
         <TcButton v-else variant="ghost" size="sm" :disabled="drawing || data.entries.length < 2" @click="draw">
           Neu auslosen
         </TcButton>
+        <TcButton variant="ghost" size="sm" @click="removeDiscipline">Disziplin löschen</TcButton>
       </div>
     </div>
 
@@ -205,7 +232,7 @@ const firstRoundDone = computed(() => {
         <TcButton variant="secondary" @click="makeConsolation">Nebenrunde erzeugen (Verlierer 1. Runde)</TcButton>
       </div>
 
-      <DisciplineView :data="data" editable @enter="editMatch = $event" />
+      <DisciplineView :data="data" editable @enter="editMatch = $event" @schedule="scheduleMatch = $event" />
     </template>
 
     <ScoreInput
@@ -215,6 +242,14 @@ const firstRoundDone = computed(() => {
       @save="saveScore"
       @clear="clearScore"
       @close="editMatch = null"
+    />
+
+    <ScheduleInput
+      v-if="scheduleMatch"
+      :match="scheduleMatch"
+      :entry-map="entryMap"
+      @save="saveSchedule"
+      @close="scheduleMatch = null"
     />
   </div>
 </template>

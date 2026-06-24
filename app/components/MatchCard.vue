@@ -7,13 +7,16 @@ const props = defineProps<{
   entryMap: Record<number, EntryDto>
   editable?: boolean
 }>()
-const emit = defineEmits<{ enter: [match: MatchDto] }>()
+const emit = defineEmits<{ enter: [match: MatchDto]; schedule: [match: MatchDto] }>()
 
 const e1 = computed(() => (props.match.entry1Id != null ? props.entryMap[props.match.entry1Id] : null))
 const e2 = computed(() => (props.match.entry2Id != null ? props.entryMap[props.match.entry2Id] : null))
 const isBye = computed(() => props.match.status === 'BYE')
 const done = computed(() => props.match.status === 'DONE')
 const scoreText = computed(() => formatScore(props.match.score))
+const sets = computed(() => (props.match.score ? scoreText.value.split(',').map(s => s.trim().split(':')) : []))
+const games1 = computed(() => sets.value.map(s => s[0]).join(' '))
+const games2 = computed(() => sets.value.map(s => s[1]).join(' '))
 
 function rowClass(entryId: number | null | undefined) {
   if (!done.value || entryId == null) return ''
@@ -27,11 +30,15 @@ function rowClass(entryId: number | null | undefined) {
     :class="{ 'match--ready': match.status === 'READY', 'match--done': done }"
   >
     <div
-      v-if="match.label"
+      v-if="match.label || (editable && !isBye)"
       style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 10px; background: var(--ink-50); border-bottom: 1px solid var(--border-soft)"
     >
-      <span style="font-family: var(--font-display); font-size: 0.6875rem; font-weight: 700; letter-spacing: var(--tracking-wide); text-transform: uppercase; color: var(--text-faint)">{{ match.label }}</span>
-      <span v-if="match.scheduledAt" style="font-size: 0.6875rem; color: var(--text-faint)">{{ formatDateTime(match.scheduledAt) }}</span>
+      <span v-if="match.label" style="font-family: var(--font-display); font-size: 0.6875rem; font-weight: 700; letter-spacing: var(--tracking-wide); text-transform: uppercase; color: var(--text-faint)">{{ match.label }}</span>
+      <span v-else />
+      <div class="tc-row" style="gap: 6px; align-items: center">
+        <span v-if="match.scheduledAt" style="font-size: 0.6875rem; color: var(--text-faint)">{{ formatDateTime(match.scheduledAt) }}</span>
+        <CalendarButton v-if="editable && !isBye" :active="!!match.scheduledAt" @click="emit('schedule', match)" />
+      </div>
     </div>
 
     <div class="match__row">
@@ -39,7 +46,7 @@ function rowClass(entryId: number | null | undefined) {
         <span v-if="e1?.seed" class="seed-badge">{{ e1.seed }}</span>
         <span class="player">{{ e1?.name ?? '—' }}</span>
       </span>
-      <span v-if="match.score" class="match__score">{{ scoreText.split(',').map(s => s.trim().split(':')[0]).join(' ') }}</span>
+      <span v-if="match.score" class="match__score">{{ games1 }}</span>
     </div>
 
     <div class="match__row">
@@ -48,10 +55,7 @@ function rowClass(entryId: number | null | undefined) {
         <span v-if="e2?.seed" class="seed-badge">{{ e2.seed }}</span>
         <span class="player">{{ e2?.name ?? '—' }}</span>
       </span>
-    </div>
-
-    <div v-if="match.score" style="padding: 4px 10px; border-top: 1px solid var(--border-soft); text-align: right">
-      <span class="match__score">{{ scoreText }}</span>
+      <span v-if="!isBye && match.score" class="match__score">{{ games2 }}</span>
     </div>
 
     <div v-if="editable && !isBye" class="tc-no-print" style="padding: 6px 10px; border-top: 1px solid var(--border-soft)">
