@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import { useDb } from '../../../db'
 import { disciplines, entries, matches } from '../../../db/schema'
 
@@ -13,7 +13,12 @@ export default defineEventHandler(async (event) => {
   // Nebenrunden-Spiele und -Teilnehmer (Platzhalter/Personen) entfernen
   await db
     .delete(matches)
-    .where(and(eq(matches.disciplineId, disciplineId), eq(matches.stage, 'CONSOLATION')))
+    .where(
+      and(
+        eq(matches.disciplineId, disciplineId),
+        inArray(matches.stage, ['CONSOLATION', 'CONSOLATION_THIRD']),
+      ),
+    )
   // Finalrunde (Finale + Spiel um Platz 3) entfernen
   await db
     .delete(matches)

@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
     const plan = planGroups(drawEntries, 1)
     await persistConsolationGroup(db, disciplineId, plan)
   } else {
-    const plan = planKnockout(drawEntries, { thirdPlace: false })
+    const plan = planKnockout(drawEntries, { thirdPlace: true })
     await persistKoPlan(db, disciplineId, plan, { wipe: false, stageOverride: 'CONSOLATION' })
   }
 

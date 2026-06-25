@@ -2,7 +2,7 @@
  * Persistenz & Fortschritts-Logik für Disziplinen.
  * Schreibt Auslosungspläne in die DB und propagiert Ergebnisse durch den Baum.
  */
-import { and, eq } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import { useDb } from '../db'
 import { entries, matches } from '../db/schema'
 import type { KoPlan } from './drawKo'
@@ -32,6 +32,16 @@ export async function persistKoPlan(
   const { wipe = true, stageOverride } = opts
   if (wipe) {
     await db.delete(matches).where(eq(matches.disciplineId, disciplineId))
+  } else if (stageOverride === 'CONSOLATION') {
+    // Nebenrunde: Bracket + zugehöriges Spiel um Platz 3 entfernen
+    await db
+      .delete(matches)
+      .where(
+        and(
+          eq(matches.disciplineId, disciplineId),
+          inArray(matches.stage, ['CONSOLATION', 'CONSOLATION_THIRD']),
+        ),
+      )
   } else if (stageOverride) {
     await db
       .delete(matches)
@@ -40,11 +50,17 @@ export async function persistKoPlan(
 
   const keyToId: Record<string, number> = {}
   for (const pm of plan.matches) {
+    // In der Nebenrunde wird das Spiel um Platz 3 als CONSOLATION_THIRD geführt,
+    // damit es sich vom Spiel um Platz 3 des Hauptbaums unterscheidet.
+    const stage =
+      stageOverride === 'CONSOLATION' && pm.stage === 'THIRD_PLACE'
+        ? 'CONSOLATION_THIRD'
+        : stageOverride ?? pm.stage
     const [row] = await db
       .insert(matches)
       .values({
         disciplineId,
-        stage: stageOverride ?? pm.stage,
+        stage,
         round: pm.round,
         slot: pm.slot,
         label: pm.label,
@@ -82,7 +98,12 @@ export async function persistConsolationGroup(
 ) {
   await db
     .delete(matches)
-    .where(and(eq(matches.disciplineId, disciplineId), eq(matches.stage, 'CONSOLATION')))
+    .where(
+      and(
+        eq(matches.disciplineId, disciplineId),
+        inArray(matches.stage, ['CONSOLATION', 'CONSOLATION_THIRD']),
+      ),
+    )
 
   for (const gm of plan.matches) {
     await db.insert(matches).values({

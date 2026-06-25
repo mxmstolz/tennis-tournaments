@@ -13,7 +13,9 @@ const entryMap = computed(() => Object.fromEntries(props.entries.map((e) => [e.i
 const stage = computed(() => props.stage ?? 'MAIN')
 
 const mainMatches = computed(() => props.matches.filter((m) => m.stage === stage.value))
-const thirdPlace = computed(() => props.matches.filter((m) => m.stage === 'THIRD_PLACE'))
+// Spiel um Platz 3: im Hauptbaum THIRD_PLACE, in der Nebenrunde CONSOLATION_THIRD
+const thirdPlaceStage = computed(() => (stage.value === 'CONSOLATION' ? 'CONSOLATION_THIRD' : 'THIRD_PLACE'))
+const thirdPlace = computed(() => props.matches.filter((m) => m.stage === thirdPlaceStage.value))
 
 const rounds = computed(() => {
   const map = new Map<number, MatchDto[]>()
@@ -46,7 +48,7 @@ function roundTitle(matches: MatchDto[]): string {
       />
     </div>
 
-    <div v-if="thirdPlace.length && stage === 'MAIN'" class="bracket__round">
+    <div v-if="thirdPlace.length" class="bracket__round">
       <div class="bracket__round-title">Spiel um Platz 3</div>
       <MatchCard
         v-for="m in thirdPlace"

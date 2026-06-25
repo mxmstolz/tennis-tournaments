@@ -27,6 +27,7 @@ export const matchStage = pgEnum('match_stage', [
   'THIRD_PLACE', // Spiel um Platz 3
   'FINAL', // Endspiel (für spätere Gruppe->Finalrunde)
   'CONSOLATION', // Nebenrunde
+  'CONSOLATION_THIRD', // Spiel um Platz 3 der Nebenrunde
 ])
 export const matchStatus = pgEnum('match_status', [
   'PENDING', // Teilnehmer noch nicht vollständig bekannt

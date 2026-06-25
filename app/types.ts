@@ -13,7 +13,7 @@ export interface EntryDto {
 export interface MatchDto {
   id: number
   disciplineId: number
-  stage: 'MAIN' | 'GROUP' | 'THIRD_PLACE' | 'FINAL' | 'CONSOLATION'
+  stage: 'MAIN' | 'GROUP' | 'THIRD_PLACE' | 'FINAL' | 'CONSOLATION' | 'CONSOLATION_THIRD'
   round: number
   slot: number
   groupNo: number | null
