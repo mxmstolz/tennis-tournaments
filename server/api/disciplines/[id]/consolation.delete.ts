@@ -14,6 +14,13 @@ export default defineEventHandler(async (event) => {
   await db
     .delete(matches)
     .where(and(eq(matches.disciplineId, disciplineId), eq(matches.stage, 'CONSOLATION')))
+  // Finalrunde (Finale + Spiel um Platz 3) entfernen
+  await db
+    .delete(matches)
+    .where(and(eq(matches.disciplineId, disciplineId), eq(matches.stage, 'FINAL')))
+  await db
+    .delete(matches)
+    .where(and(eq(matches.disciplineId, disciplineId), eq(matches.stage, 'THIRD_PLACE')))
   await db
     .delete(entries)
     .where(and(eq(entries.disciplineId, disciplineId), eq(entries.isConsolation, true)))

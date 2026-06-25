@@ -1,0 +1,1 @@
+ALTER TYPE "public"."discipline_format" ADD VALUE 'FINALS';

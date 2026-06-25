@@ -99,6 +99,59 @@ export async function persistConsolationGroup(
   }
 }
 
+/**
+ * Schreibt eine Finalrunde für ein Gruppenturnier mit genau 2 Gruppen:
+ * Beide Gruppensieger spielen das Finale, beide Gruppenzweiten um Platz 3.
+ * Die Teilnehmer werden zunächst als Platzhalter angelegt und später per
+ * "Person zuweisen" durch die feststehenden Personen ersetzt.
+ */
+export async function persistGroupFinals(db: Db, disciplineId: number) {
+  // Bestehende Finalrunde (Spiele + Platzhalter) aufräumen
+  await db
+    .delete(matches)
+    .where(and(eq(matches.disciplineId, disciplineId), eq(matches.stage, 'FINAL')))
+  await db
+    .delete(matches)
+    .where(and(eq(matches.disciplineId, disciplineId), eq(matches.stage, 'THIRD_PLACE')))
+  await db
+    .delete(entries)
+    .where(and(eq(entries.disciplineId, disciplineId), eq(entries.isConsolation, true)))
+
+  const placeholder = async (displayName: string) => {
+    const [row] = await db
+      .insert(entries)
+      .values({ disciplineId, displayName, isConsolation: true })
+      .returning({ id: entries.id })
+    return row.id
+  }
+
+  const winner1 = await placeholder('Sieger Gruppe 1')
+  const winner2 = await placeholder('Sieger Gruppe 2')
+  const second1 = await placeholder('Zweiter Gruppe 1')
+  const second2 = await placeholder('Zweiter Gruppe 2')
+
+  await db.insert(matches).values({
+    disciplineId,
+    stage: 'FINAL',
+    round: 1,
+    slot: 0,
+    label: 'Finale',
+    entry1Id: winner1,
+    entry2Id: winner2,
+    status: 'READY',
+  })
+  await db.insert(matches).values({
+    disciplineId,
+    stage: 'THIRD_PLACE',
+    round: 1,
+    slot: 1,
+    label: 'Spiel um Platz 3',
+    entry1Id: second1,
+    entry2Id: second2,
+    status: 'READY',
+  })
+}
+
 /** Schreibt einen Gruppen-Plan in die DB (Stage GROUP). */
 export async function persistGroupPlan(
   db: Db,

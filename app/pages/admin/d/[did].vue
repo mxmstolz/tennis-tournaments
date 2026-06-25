@@ -18,7 +18,11 @@ const entryMap = computed(() => Object.fromEntries((data.value?.entries ?? []).m
 // Haupt-Teilnehmer vs. Nebenrunden-Teilnehmer (Platzhalter/Personen) trennen
 const mainEntries = computed(() => (data.value?.entries ?? []).filter((e) => !e.isConsolation))
 const consoEntries = computed(() => (data.value?.entries ?? []).filter((e) => e.isConsolation))
-const hasConsolationMatches = computed(() => (data.value?.matches ?? []).some((m) => m.stage === 'CONSOLATION'))
+const hasConsolationMatches = computed(() =>
+  (data.value?.matches ?? []).some((m) => ['CONSOLATION', 'FINAL', 'THIRD_PLACE'].includes(m.stage)),
+)
+// Finalrunde nur bei Gruppenturnier mit genau 2 Gruppen
+const finalsEligible = computed(() => d.value?.format === 'GROUP' && d.value?.numGroups === 2)
 
 const msg = ref('')
 const err = ref('')
@@ -81,7 +85,7 @@ async function draw() {
 }
 
 // ---- Nebenrunde (manuell) ----
-const consoFormat = ref<'KO' | 'GROUP'>('KO')
+const consoFormat = ref<'KO' | 'GROUP' | 'FINALS'>('KO')
 watchEffect(() => {
   if (d.value?.consolationFormat) consoFormat.value = d.value.consolationFormat
 })
@@ -303,14 +307,18 @@ async function removeDiscipline() {
 
       <!-- Nebenrunde (manuell, mit Platzhaltern) -->
       <TcCard padded accent style="margin-top: var(--space-6)">
-        <h3 style="margin: 0 0 var(--space-2)">Nebenrunde (manuell)</h3>
-        <p class="tc-faint" style="font-size: var(--text-sm); margin: 0 0 var(--space-4)">
+        <h3 style="margin: 0 0 var(--space-2)">Nebenrunde</h3>
+        <p v-if="consoFormat === 'FINALS'" class="tc-faint" style="font-size: var(--text-sm); margin: 0 0 var(--space-4)">
+          Finalrunde aus den Gruppen: beide Gruppensieger spielen das Finale, die Gruppenzweiten um Platz 3.
+          Nach dem Erstellen pro Position über „Person zuweisen" die feststehende Person eintragen.
+        </p>
+        <p v-else class="tc-faint" style="font-size: var(--text-sm); margin: 0 0 var(--space-4)">
           Platzhalter (z. B. „Verlierer Spiel 1") oder Personen anlegen, Format wählen und Plan erstellen.
           Platzhalter können später per „Person zuweisen" durch eine Person ersetzt werden.
         </p>
 
-        <!-- Hinzufügen -->
-        <form class="tc-row-wrap" style="align-items: flex-end; margin-bottom: var(--space-5)" @submit.prevent="addConsoEntry">
+        <!-- Hinzufügen (nicht bei Finalrunde – Teilnehmer ergeben sich aus den Gruppen) -->
+        <form v-if="consoFormat !== 'FINALS'" class="tc-row-wrap" style="align-items: flex-end; margin-bottom: var(--space-5)" @submit.prevent="addConsoEntry">
           <label class="tc-stack-sm">
             <span style="font-family: var(--font-display); font-weight: 600; font-size: var(--text-sm)">Platzhalter</span>
             <input v-model="consoNew.displayName" class="tc-select" style="min-width: 200px" placeholder="z. B. Verlierer Spiel 1" />
@@ -387,9 +395,10 @@ async function removeDiscipline() {
             <select v-model="consoFormat" class="tc-select" style="min-width: 140px">
               <option value="KO">KO-Baum</option>
               <option value="GROUP">Gruppe</option>
+              <option v-if="finalsEligible" value="FINALS">Finalrunde (Gruppensieger)</option>
             </select>
           </label>
-          <TcButton :disabled="consoEntries.length < 2" @click="buildConsolation">
+          <TcButton :disabled="consoFormat === 'FINALS' ? !finalsEligible : consoEntries.length < 2" @click="buildConsolation">
             {{ hasConsolationMatches ? 'Nebenrunde neu erstellen' : 'Nebenrunde erstellen' }}
           </TcButton>
           <TcButton v-if="hasConsolationMatches || consoEntries.length" variant="ghost" @click="deleteConsolation">

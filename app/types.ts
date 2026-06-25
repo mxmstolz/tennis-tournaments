@@ -54,7 +54,7 @@ export interface DisciplineDto {
   status: 'SETUP' | 'DRAWN' | 'RUNNING' | 'DONE'
   thirdPlaceMatch: boolean
   consolation: boolean
-  consolationFormat: 'KO' | 'GROUP' | null
+  consolationFormat: 'KO' | 'GROUP' | 'FINALS' | null
   numGroups: number
   pointsWin: number
   pointsLoss: number

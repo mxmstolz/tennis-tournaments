@@ -9,6 +9,18 @@ const entryMap = computed(() => Object.fromEntries(props.data.entries.map((e) =>
 const name = (id: number | null | undefined) => (id != null ? entryMap.value[id]?.name ?? '—' : '—')
 
 const consolationMatches = computed(() => props.data.matches.filter((m) => m.stage === 'CONSOLATION'))
+// Finalrunde (Gruppenturnier mit 2 Gruppen): Finale + Spiel um Platz 3.
+// Nur im FINALS-Modus – das THIRD_PLACE-Spiel eines KO-Baums wird dort im Baum gezeigt.
+const isFinals = computed(() => props.data.discipline.consolationFormat === 'FINALS')
+const finalMatch = computed(() =>
+  isFinals.value ? props.data.matches.find((m) => m.stage === 'FINAL') ?? null : null,
+)
+const thirdPlaceMatch = computed(() =>
+  isFinals.value ? props.data.matches.find((m) => m.stage === 'THIRD_PLACE') ?? null : null,
+)
+const finalsMatches = computed(() =>
+  [finalMatch.value, thirdPlaceMatch.value].filter((m): m is MatchDto => m != null),
+)
 const groupNos = computed(() =>
   Object.keys(props.data.standings).map(Number).sort((a, b) => a - b),
 )
@@ -25,6 +37,14 @@ const podium = computed(() => {
     const runner = final.winnerEntryId === final.entry1Id ? final.entry2Id : final.entry1Id
     const third = props.data.matches.find((m) => m.stage === 'THIRD_PLACE' && m.status === 'DONE')
     return { first: champ, second: runner, third: third?.winnerEntryId ?? null }
+  }
+  if (d.value.format === 'GROUP' && d.value.consolationFormat === 'FINALS') {
+    const fin = finalMatch.value
+    if (!fin || fin.status !== 'DONE') return null
+    const first = fin.winnerEntryId
+    const second = fin.winnerEntryId === fin.entry1Id ? fin.entry2Id : fin.entry1Id
+    const third = thirdPlaceMatch.value?.status === 'DONE' ? thirdPlaceMatch.value : null
+    return { first, second, third: third?.winnerEntryId ?? null }
   }
   if (d.value.format === 'GROUP' && groupNos.value.length === 1) {
     const rows = props.data.standings[groupNos.value[0]]
@@ -73,6 +93,23 @@ const groupMatches = (g: number) => props.data.matches.filter((m) => m.stage ===
         />
       </div>
     </template>
+
+    <!-- Finalrunde (Gruppenturnier mit 2 Gruppen): Finale + Spiel um Platz 3 -->
+    <TcCard v-if="finalsMatches.length" padded>
+      <h3 style="margin: 0 0 var(--space-5)">Finalrunde</h3>
+      <div class="tc-row-wrap" style="gap: var(--space-5); align-items: flex-start">
+        <div v-for="m in finalsMatches" :key="m.id" class="tc-stack-sm">
+          <div style="font-family: var(--font-display); font-weight: 600; font-size: var(--text-sm)">{{ m.label }}</div>
+          <MatchCard
+            :match="m"
+            :entry-map="entryMap"
+            :editable="editable"
+            @enter="emit('enter', $event)"
+            @schedule="emit('schedule', $event)"
+          />
+        </div>
+      </div>
+    </TcCard>
 
     <!-- Nebenrunde (für alle Formate) -->
     <TcCard v-if="consolationMatches.length" padded>

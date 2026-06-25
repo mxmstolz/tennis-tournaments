@@ -15,6 +15,13 @@
       "when": 1782314450632,
       "tag": "0001_gorgeous_blur",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782378210918,
+      "tag": "0002_useful_franklin_richards",
+      "breakpoints": true
     }
   ]
 }

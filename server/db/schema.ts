@@ -14,7 +14,7 @@ import type { MatchScore } from '../utils/score'
 // ---- Enums -----------------------------------------------------------------
 
 export const disciplineKind = pgEnum('discipline_kind', ['SINGLES', 'DOUBLES'])
-export const disciplineFormat = pgEnum('discipline_format', ['KO', 'GROUP'])
+export const disciplineFormat = pgEnum('discipline_format', ['KO', 'GROUP', 'FINALS'])
 export const disciplineStatus = pgEnum('discipline_status', [
   'SETUP', // Teilnehmer werden erfasst
   'DRAWN', // ausgelost, Baum/Gruppen stehen

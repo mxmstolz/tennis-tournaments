@@ -20,7 +20,7 @@ export function formatScore(score: MatchScore | null | undefined): string {
 }
 
 export const KIND_LABEL: Record<string, string> = { SINGLES: 'Einzel', DOUBLES: 'Doppel' }
-export const FORMAT_LABEL: Record<string, string> = { KO: 'KO-System', GROUP: 'Gruppe' }
+export const FORMAT_LABEL: Record<string, string> = { KO: 'KO-System', GROUP: 'Gruppe', FINALS: 'Finalrunde' }
 export const STATUS_LABEL: Record<string, string> = {
   SETUP: 'Aufbau',
   DRAWN: 'Ausgelost',
